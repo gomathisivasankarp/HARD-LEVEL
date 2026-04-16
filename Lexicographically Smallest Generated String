@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+class Solution {
+public:
+    string generateString(string str1, string str2) {
+        int n = str1.length();
+        int m = str2.length();
+        int totalLen = n + m - 1;
+        string word(totalLen, '?');
+        vector<bool> fixed(totalLen, false);
+        for (int i = 0; i < n; ++i) {
+            if (str1[i] == 'T') {
+                for (int j = 0; j < m; ++j) {
+                    if (word[i + j] != '?' && word[i + j] != str2[j]) return "";
+                    word[i + j] = str2[j];
+                    fixed[i + j] = true;
+                }
+            }
+        }
+        for (int i = 0; i < totalLen; ++i) {
+            if (word[i] == '?') word[i] = 'a';
+        }
+        for (int i = 0; i < n; ++i) {
+            if (str1[i] == 'F') {
+                while (word.substr(i, m) == str2) {
+                    bool adjusted = false;
+                    for (int j = m - 1; j >= 0; --j) {
+                        if (!fixed[i + j]) {
+                            word[i + j] = (str2[j] == 'a') ? 'b' : 'a';
+                            adjusted = true;
+                            break;
+                        }
+                    }
+                    if (!adjusted) return "";
+                }
+            } else {
+                if (word.substr(i, m) != str2) return "";
+            }
+        }
+
+        return word;
+    }
+};
