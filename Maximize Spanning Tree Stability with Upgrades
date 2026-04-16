@@ -1,0 +1,79 @@
+class DSU {
+public:
+    vector<int> parent;
+    int components;
+    DSU(int n) : components(n) {
+        parent.resize(n);
+        iota(parent.begin(), parent.end(), 0);
+    }
+    int find(int i) {
+        return (parent[i] == i) ? i : (parent[i] = find(parent[i]));
+    }
+    bool unite(int i, int j) {
+        int rootI = find(i), rootJ = find(j);
+        if (rootI != rootJ) {
+            parent[rootI] = rootJ;
+            components--;
+            return true;
+        }
+        return false;
+    }
+};
+
+class Solution {
+public:
+    bool canAchieve(int n, vector<vector<int>>& edges, int k, int X) {
+        DSU dsu(n);
+        int edgesCount = 0;
+        int upgradesUsed = 0;
+        vector<vector<int>> optional;
+
+        // 1. Mandatory edges MUST be included
+        for (const auto& e : edges) {
+            if (e[3] == 1) {
+                if (e[2] < X) return false; // Too weak
+                if (!dsu.unite(e[0], e[1])) return false; // Cycle with mandatory edges!
+                edgesCount++;
+            } else {
+                optional.push_back(e);
+            }
+        }
+
+        // 2. Add optional edges that satisfy s >= X without upgrades
+        for (const auto& e : optional) {
+            if (e[2] >= X) {
+                if (dsu.unite(e[0], e[1])) edgesCount++;
+            }
+        }
+
+        // 3. Add optional edges using upgrades (2*s >= X)
+        for (const auto& e : optional) {
+            // Only try upgrading if the edge wasn't already strong enough
+            if (e[2] < X && e[2] * 2 >= X && upgradesUsed < k) {
+                if (dsu.unite(e[0], e[1])) {
+                    edgesCount++;
+                    upgradesUsed++;
+                }
+            }
+        }
+
+        // Valid only if exactly n-1 edges are used and all nodes are connected
+        return edgesCount == n - 1 && dsu.components == 1;
+    }
+
+    int maxStability(int n, vector<vector<int>>& edges, int k) {
+        int low = 1, high = 200000; 
+        int ans = -1;
+
+        while (low <= high) {
+            int mid = low + (high - low) / 2;
+            if (canAchieve(n, edges, k, mid)) {
+                ans = mid;
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+        return ans;
+    }
+};
